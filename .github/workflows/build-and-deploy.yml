@@ -1,0 +1,130 @@
+name: Build and Deploy Game Grid
+
+on:
+  # Run every 8 hours
+  schedule:
+    - cron: '0 */8 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+  
+  # Run on pushes to main (for development)
+  push:
+    branches: [ main ]
+    paths:
+      - 'game-grid/build/**'
+      - 'game-grid/src/**'
+      - '.github/workflows/**'
+
+env:
+  DATA_URL: ${{ secrets.DATA_URL }}
+  NODE_VERSION: '22'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./game-grid
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # We don't need full history for Pages deployment
+        fetch-depth: 0
+
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Create cache directories
+      run: |
+        mkdir -p cache/images
+        mkdir -p dist/data
+
+    - name: Restore build cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          cache/
+          node_modules/.cache
+        key: game-grid-cache-${{ hashFiles('**/package-lock.json') }}-${{ github.run_number }}
+        restore-keys: |
+          game-grid-cache-${{ hashFiles('**/package-lock.json') }}-
+          game-grid-cache-
+
+    - name: Check cache status
+      run: |
+        echo "Cache directory contents:"
+        ls -la cache/ || echo "Cache directory is empty"
+        echo "Image cache count:"
+        ls -1 cache/images/ 2>/dev/null | wc -l || echo "0"
+        echo "Cache size:"
+        du -sh cache/ 2>/dev/null || echo "0B"
+
+    - name: Build static site
+      run: npm run build
+      env:
+        DATA_URL: ${{ env.DATA_URL }}
+
+    - name: Display build statistics
+      run: |
+        echo "Build completed successfully!"
+        echo "Generated files:"
+        ls -la dist/
+        echo "Data files:"
+        ls -la dist/data/
+        echo "Final cache size:"
+        du -sh cache/
+        echo "Total images cached:"
+        ls -1 cache/images/ | wc -l
+        echo "Metadata:"
+        cat dist/data/metadata.json | jq '.'
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './dist'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  # Separate job to clean up old caches (runs weekly)
+  cleanup-cache:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * 0'
+    
+    steps:
+    - name: Cleanup old caches
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const caches = await github.rest.actions.getActionsCaches({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          
+          // Keep only the 5 most recent caches
+          const cachesToDelete = caches.data.actions_caches
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(5);
+          
+          for (const cache of cachesToDelete) {
+            console.log(`Deleting cache: ${cache.key}`);
+            await github.rest.actions.deleteActionsCacheById({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              cache_id: cache.id,
+            });
+          }

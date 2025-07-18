@@ -1,0 +1,8 @@
+!.envrc
+.direnv
+.dream2nix
+.env*
+dist
+node_modules
+result
+cache

@@ -1,0 +1,52 @@
+name: Test Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'game-grid/build/**'
+      - 'game-grid/src/**'
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./game-grid
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Create cache directories
+      run: |
+        mkdir -p cache/images
+        mkdir -p dist/data
+
+    - name: Test build (without cache)
+      run: npm run build
+      env:
+        DATA_URL: null
+
+    - name: Validate build output
+      run: |
+        # Check if dist directory exists
+        test -d dist || exit 1
+        
+        # Check if data files exist
+        test -f dist/data/metadata.json || exit 1
+        test -f dist/data/page-1.json || exit 1
+        
+        # Check if cache was created
+        test -d cache/images || exit 1
+        
+        echo "Build test passed!"

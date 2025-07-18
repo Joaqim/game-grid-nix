@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Cards</title>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Latest Games</h1>
+            <p>Click cards to explore more content</p>
+        </div>
+
+        <div class="grid"></div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <!-- <button class="nav-page prev" onclick="prevPage()">&larr;&larr;</button> -->
+        <button class="nav-arrow prev" onclick="prevCard()">&larr;</button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <img id="modal-image" src="" alt="">
+                <a class="modal-link" id="modal-add-game" style="right: 8rem;" href=""">
+                    <span title="Experiment: Add to Game library">
+                        &plus;
+                    </span>
+                </a>
+                <a class="modal-link" id="modal-link" href=""">
+                    <span title="Download with magnet">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="red" class="bi bi-magnet-fill" viewBox="0 0 16 16">
+                          <path d="M15 12h-4v3h4zM5 12H1v3h4zM0 8a8 8 0 1 1 16 0v8h-6V8a2 2 0 1 0-4 0v8H0z"></path>
+                        </svg>
+                    </span>
+                </a>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img class="modal-overlay-image" id="modal-overlay-image" aria-hidden="true" src="" alt="">
+                <h2 class="modal-title" id="modal-title"></h2>
+                <p class="modal-description" id="modal-description"></p>
+                <div class="modal-meta" id="modal-meta"></div>
+                <div class="modal-content-text" id="modal-content"></div>
+            </div>
+        </div>
+
+        <button class="nav-arrow next" onclick="nextCard()">&rarr;</button>
+        <!-- <button class="nav-page next" onclick="nextPage()">&rarr;&rarr;</button> -->
+    </div>
+<script>
+        // Will be update by `fetchMetadata`
+        let cardsPerPage = 12;
+        let totalPages = 1;
+        let totalEntries = 1;
+
+        let currentCardIndex = 0;
+        let currentPage = 1;
+
+        let searchIndex = [];
+        let cardData = [];
+
+
+        // TODO: Always render cardData, don't do fetchEntries here
+        async function renderCards(ids = [], page_nrs = []) {
+            const grid = document.querySelector(".grid");
+
+            // Fetch card data based on IDs or current page
+            if (ids.length > 0) {
+                cardData = await fetchEntriesByIds(ids, page_nrs)
+            } else {
+                cardData = await fetchEntries(currentPage);
+            }
+
+            // Create a document fragment to minimize reflows
+            const fragment = document.createDocumentFragment();
+
+            // Create or update card elements
+            cardData.forEach((card, index) => {
+                // Check if the card already exists in the grid
+                let cardElement = grid.querySelector(`.card[data-id="${card.id}"]`);
+
+                if (!cardElement) {
+                    // Create a new card element if it doesn't exist
+                    cardElement = document.createElement("div");
+                    cardElement.className = "card";
+                    cardElement.setAttribute("data-id", card.id); // Set a data attribute for easy lookup
+                    cardElement.onclick = () => openModal(index);
+                }
+
+                // For removing redundant `Game Title` in start of description
+                function trimStartMatches(str, match) {
+                    if (match === "") return str; // avoid infinite loop
+                    while (str.startsWith(match)) {
+                        str = str.slice(match.length);
+                    }
+                    return str;
+                }
+
+                // Update the card's inner HTML
+                cardElement.innerHTML = `
+                    <div class="card-image">
+                        <img src="data:image/png;base64,${card.hero_img_base64}" alt="${card.title}">
+                    </div>
+                    <div class="card-content">
+                        <img src="data:image/png;base64,${card.hero_img_base64}" aria-hidden="true" class="overlay-image">
+                        <h3 class="card-title">${card.title}</h3>
+                        <p class="card-description">${card.description ?  trimStartMatches(card.description, `${card.title}:`).trim() : ""}</p>
+                        <div class="card-meta">
+                            ${card.genres.map(tag => `<span class="card-tag">${tag}</span>`).join("")}
+                        </div>
+                        <div class="card-expanded">
+                            ${(card.description && card.content) ? `<p>${card.content.split("</p>")[0]}</p>` : card.content}
+                        </div>
+                    </div>
+                `;
+
+                // Append the card element to the document fragment
+                fragment.appendChild(cardElement);
+            });
+
+            // Clear the grid and append the new cards
+            grid.innerHTML = ""; // Clear existing cards
+            grid.appendChild(fragment); // Append all new cards at once
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            let paginationContainer = document.getElementById("pagination");
+
+            paginationContainer.innerHTML = "";
+
+            //const totalPages = Math.ceil(cardData.length / cardsPerPage);
+            const maxVisiblePages = 5; // Maximum number of page numbers to show
+            const halfVisible = Math.floor(maxVisiblePages / 2);
+
+            let startPage = Math.max(1, currentPage - halfVisible);
+            let endPage = Math.min(totalPages, currentPage + halfVisible);
+
+            if (currentPage <= halfVisible) {
+                endPage = Math.min(totalPages, maxVisiblePages);
+            } else if (currentPage + halfVisible >= totalPages) {
+                startPage = Math.max(1, totalPages - maxVisiblePages + 1);
+            }
+
+            if (startPage > 1) {
+                const firstBtn = document.createElement("button");
+                firstBtn.innerText = 1;
+                firstBtn.onclick = () => {
+                    currentPage = 1;
+                    renderCards();
+                };
+                firstBtn.class = "pagination-button";
+                paginationContainer.appendChild(firstBtn);
+
+                if (startPage > 2) {
+                    const ellipsis = document.createElement("span");
+                    ellipsis.innerText = "...";
+                    ellipsis.class = "pagination-ellipsis";
+                    paginationContainer.appendChild(ellipsis);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement("button");
+                btn.innerText = i;
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderCards();
+                };
+                btn.class = "pagination-button";
+                btn.disabled = i === currentPage;
+                paginationContainer.appendChild(btn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement("span");
+                    ellipsis.innerText = "...";
+                    ellipsis.class = "pagination-ellipsis";
+                    paginationContainer.appendChild(ellipsis);
+                }
+
+                const lastBtn = document.createElement("button");
+                lastBtn.innerText = totalPages;
+                lastBtn.onclick = () => {
+                    currentPage = totalPages;
+                    renderCards();
+                };
+                lastBtn.class = "pagination-button";
+                paginationContainer.appendChild(lastBtn);
+            }
+        }
+
+/*         function searchCards(query) {
+            query = query.toLowerCase();
+            filteredData = cardData.filter(card => {
+                return card.title.toLowerCase().includes(query) ||
+                    card.tags.some(tag => tag.toLowerCase().includes(query));
+            });
+            currentPage = 1;
+            renderCards();
+        } */
+
+        // Inject search input
+        function addSearchBar() {
+            const header = document.querySelector(".header");
+            const searchInput = document.createElement("input");
+            searchInput.type = "text";
+            searchInput.placeholder = "Search games...";
+            searchInput.style.marginTop = "10px";
+            searchInput.oninput = (e) => performSearch(e.target.value);
+            header.appendChild(searchInput);
+        }
+
+        // Function to fetch metadata
+        async function fetchMetadata() {
+            try {
+                const response = await fetch('./data/metadata.json');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch metadata');
+                }
+                const metadata = await response.json();
+                totalPages = metadata.totalPages;
+                cardsPerPage = metadata.entriesPerPage;
+                totalCards = metadata.totalEntries;
+                console.log('Metadata:', metadata);
+                return metadata;
+            } catch (error) {
+                console.error('Error fetching metadata:', error);
+            }
+        }
+
+        // Function to fetch entries for a specific page
+        async function fetchEntries(page) {
+            try {
+                const response = await fetch(`./data/page-${page}.json`);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch entries for page ${page}`);
+                }
+                const entriesData = await response.json();
+
+                return entriesData.entries.map(({id, title, description, genres, hero_img_base64, info_hash, screenshots_base64}) => ({
+                    id,
+                    title,
+                    description,
+                    genres,
+                    hero_img_base64,
+                    info_hash,
+                    content: screenshots_base64.length > 0 ? `
+                    <p><b>Screenshots:</b></p>
+                    ${screenshots_base64.map(base64 => `<img src="data:image/png;base64,${base64}" alt="${title}">`)}
+                    ` : '',
+                    
+                    // We exclude only screenshots_base64 and add content
+                    // screenshots_base64: []
+                }));
+            } catch (error) {
+                console.error('Error fetching entries:', error);
+            }
+        }
+
+        async function fetchSearchIndex() {
+            try {
+                const response = await fetch('./data/search-index.json');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch search index');
+                }
+                searchIndex = await response.json();
+                console.log('Search index length:', searchIndex.length);
+            } catch (error) {
+                console.error('Error fetching search index:', error);
+            }
+        }
+
+        async function init() {
+            addSearchBar();
+            fetchSearchIndex();
+            await fetchMetadata();
+            renderCards();
+        }
+        // Initialize
+        document.addEventListener("DOMContentLoaded", () => {
+            init();
+        });
+        async function fetchEntriesByIds(ids, page_nrs = new Set()) {
+            let filteredEntries = [];
+
+            if (ids == null || ids.length === 0) {
+                return filteredEntries;
+            }
+
+            // Fetch entries from hinted page nrs
+            for (const page of page_nrs) {
+                try {
+                    const response = await fetch(`./data/page-${page}.json`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch entries for page ${page}`);
+                    }
+                    const entriesData = await response.json();
+                    if (entriesData == null || entriesData.entries == null) {
+                        throw new Error(`Failed to fetch entries for page ${page}`);
+                    }
+                    filteredEntries.push(...entriesData.entries.filter(entry => ids.includes(entry.id)))
+                    if (filteredEntries.length >= ids.length) {
+                        break;
+                    }
+                } catch (error) {
+                    console.error('Error fetching entries:', error);
+                }
+            }
+            
+            return filteredEntries;
+        }
+
+
+        function performSearch(query/* : string */, filters/* : any */)/* : string[] */ {
+            if (query == "") {
+                renderCards();
+                return;
+            }
+            function debounce(func, delay) {
+                let timeoutId;
+                return function(...args) {
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                    }
+                    timeoutId = setTimeout(() => {
+                        func.apply(this, args);
+                    }, delay);
+                };
+            }
+            let page_nrs = new Set();
+            let game_ids = searchIndex
+                .filter(entry => {
+                // Text search
+                const matchesQuery = !query || entry.searchableText.includes(query.toLowerCase());
+                
+                // Filters
+                const matchesFilters = !filters || Object.keys(filters).every(key => {
+                    const filterValue = filters[key];
+                    const entryValue = entry.filters[key];
+                    
+                    if (Array.isArray(filterValue)) {
+                        return filterValue.some(val => entryValue?.includes?.(val));
+                    }
+                    return entryValue === filterValue;
+                });
+                
+                return matchesQuery && matchesFilters;
+                })
+                // Simple match ranking
+                .sort((a, b) => {
+                    const aScore = a.searchableText.split(query.toLowerCase()).length - 1;
+                    const bScore = b.searchableText.split(query.toLowerCase()).length - 1;
+                    return bScore - aScore;
+                })
+                // 12 best candidates
+                .slice(0, 12)
+                .map(entry => { 
+                    page_nrs.add(entry.page_nr);
+                    return entry.id
+                });
+            
+            if (game_ids.length === 0) {
+                document.querySelector('.grid').innerHTML = '<p>No results found.</p>';
+                return;
+            }
+            //cardData = fetchEntriesByIds(result);;
+            debounce(async () => {
+                await renderCards(game_ids, page_nrs);
+            }, 300)();
+            //renderCards(result);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                button.textContent = '🌙 Dark Mode';
+            } else {
+                body.dataset.theme = 'dark';
+                button.textContent = '☀️ Light Mode';
+            }
+        }
+
+        function openModal(index) {
+            currentCardIndex = index;
+            const modal = document.getElementById('modal');
+            const card = cardData[index];
+            
+            // Populate modal content
+            document.getElementById('modal-image').src = `data:image/png;base64,${card.hero_img_base64}`;
+            document.getElementById('modal-overlay-image').src = `data:image/png;base64,${card.hero_img_base64}`;
+            document.getElementById('modal-title').textContent = card.title;
+            document.getElementById('modal-link').href = `magnet:?xt=urn:btih:${card.info_hash}&dn=${card.title}`;
+            document.getElementById('modal-description').textContent = card.description;
+            document.getElementById('modal-content').innerHTML = card.content;
+            
+            // Create tags
+            const metaDiv = document.getElementById('modal-meta');
+            metaDiv.innerHTML = '';
+            card.genres.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'modal-tag';
+                tagElement.textContent = tag;
+                metaDiv.appendChild(tagElement);
+            });
+            
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Update navigation arrows
+            updateNavigation();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function nextCard() {
+            if (currentCardIndex - (cardsPerPage * (currentPage - 1)) < cardsPerPage - 1 && currentCardIndex < cardData.length - 1) {
+                openModal(currentCardIndex + 1);
+            }
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0 && currentCardIndex < cardsPerPage ) {
+                openModal(currentCardIndex - 1);
+            }
+        }
+
+        function nextPage() {
+            closeModal();
+            if (currentPage < Math.ceil(cardData.length / cardsPerPage)) {
+                currentPage++;
+                renderCards();
+            }
+        }
+
+        function prevPage() {
+            closeModal();
+            if (currentPage > 1) {
+                currentPage--;
+                renderCards();
+            }
+        }
+
+        function updateNavigation() {
+            const prevButton = document.querySelector('.nav-arrow.prev');
+            const nextButton = document.querySelector('.nav-arrow.next');
+            
+            prevButton.classList.toggle('disabled', currentCardIndex - (cardsPerPage * (currentPage - 1)) === 0);
+            nextButton.classList.toggle('disabled', currentCardIndex === cardData.length - 1 || currentCardIndex - (cardsPerPage * (currentPage - 1)) === cardsPerPage - 1);
+            
+            /*
+            const prevPageButton = document.querySelector('.nav-page.prev');
+            const nextPageButton = document.querySelector('.nav-page.next');
+            prevPageButton.classList.toggle('disabled', currentPage <= 1);
+            nextPageButton.classList.toggle('disabled', currentPage >= Math.ceil(cardData.length / cardsPerPage));
+            */
+        }
+            
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('modal');
+            if (modal.classList.contains('active')) {
+                switch(e.key) {
+                    case 'Escape':
+                        closeModal();
+                        break;
+                    case 'ArrowRight':
+                        nextCard();
+                        break;
+                    case 'ArrowLeft':
+                        prevCard();
+                        break;
+                }
+            }
+        });
+
+        // Initialize theme based on system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.dataset.theme = 'dark';
+            document.querySelector('.theme-toggle').textContent = '☀️ Light Mode';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+name: Clear Build Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CLEAR" to confirm cache deletion'
+        required: true
+        default: ''
+
+jobs:
+  clear-cache:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./game-grid
+    if: github.event.inputs.confirm == 'CLEAR'
+    
+    steps:
+    - name: Clear all game-grid caches
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const caches = await github.rest.actions.getActionsCaches({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          
+          const gameGridCaches = caches.data.actions_caches
+            .filter(cache => cache.key.includes('game-grid-cache'));
+          
+          console.log(`Found ${gameGridCaches.length} game-grid caches to delete`);
+          
+          for (const cache of gameGridCaches) {
+            console.log(`Deleting cache: ${cache.key}`);
+            await github.rest.actions.deleteActionsCacheById({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              cache_id: cache.id,
+            });
+          }
+          
+          console.log('All game-grid caches cleared!');
+
