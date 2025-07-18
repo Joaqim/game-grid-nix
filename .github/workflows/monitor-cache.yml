@@ -1,4 +1,6 @@
 name: Monitor Cache Status
+permissions:
+  actions: read
 
 on:
   schedule:
@@ -8,24 +10,23 @@ on:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./game-grid
     steps:
     - name: Check cache status
       uses: actions/github-script@v7
       with:
         script: |
-          const caches = await github.rest.actions.getActionsCaches({
+          const response = await github.rest.actions.getActionsCacheList({
             owner: context.repo.owner,
             repo: context.repo.repo,
+            per_page: 100
           });
           
-          const gameGridCaches = caches.data.actions_caches
+          const caches = response.data;
+          const gameGridCaches = caches.actions_caches
             .filter(cache => cache.key.includes('game-grid-cache'))
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
           
-          console.log(`Total caches: ${caches.data.total_count}`);
+          console.log(`Total caches: ${caches.total_count}`);
           console.log(`Game Grid caches: ${gameGridCaches.length}`);
           
           if (gameGridCaches.length > 0) {
@@ -34,6 +35,9 @@ jobs:
             console.log(`Cache size: ${(latest.size_in_bytes / 1024 / 1024).toFixed(2)} MB`);
             console.log(`Created: ${latest.created_at}`);
             console.log(`Last accessed: ${latest.last_accessed_at}`);
+            console.log(`Cache ID: ${latest.id}`);
+            console.log(`Version: ${latest.version}`);
+            console.log(`Git ref: ${latest.ref}`);
           }
           
           // Alert if cache is getting too large (>500MB)
@@ -45,3 +49,15 @@ jobs:
           if (gameGridCaches.length > 10) {
             console.log('⚠️ WARNING: Too many caches stored!');
           }
+          
+          // Show summary of all caches
+          if (gameGridCaches.length > 0) {
+            console.log('\n--- All Game Grid Caches ---');
+            gameGridCaches.forEach((cache, index) => {
+              console.log(`${index + 1}. ${cache.key} (${(cache.size_in_bytes / 1024 / 1024).toFixed(2)} MB) - ${cache.created_at}`);
+            });
+          }
+          
+          // Calculate total cache usage
+          const totalCacheSize = gameGridCaches.reduce((total, cache) => total + cache.size_in_bytes, 0);
+          console.log(`\nTotal Game Grid cache usage: ${(totalCacheSize / 1024 / 1024).toFixed(2)} MB`);

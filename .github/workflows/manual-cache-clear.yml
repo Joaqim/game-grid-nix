@@ -1,4 +1,6 @@
 name: Clear Build Cache
+permissions:
+  actions: write
 
 on:
   workflow_dispatch:
@@ -7,38 +9,100 @@ on:
         description: 'Type "CLEAR" to confirm cache deletion'
         required: true
         default: ''
+      cache_pattern:
+        description: 'Cache key pattern to match (default: game-grid-cache)'
+        required: false
+        default: 'game-grid-cache'
+      dry_run:
+        description: 'Dry run - list caches without deleting'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   clear-cache:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./game-grid
-    if: github.event.inputs.confirm == 'CLEAR'
+    if: github.event.inputs.confirm == 'CLEAR' || github.event.inputs.dry_run == 'true'
     
     steps:
-    - name: Clear all game-grid caches
+    - name: Clear matching caches
       uses: actions/github-script@v7
       with:
         script: |
-          const caches = await github.rest.actions.getActionsCaches({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-          });
+          const isDryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+          const cachePattern = '${{ github.event.inputs.cache_pattern }}' || 'game-grid-cache';
           
-          const gameGridCaches = caches.data.actions_caches
-            .filter(cache => cache.key.includes('game-grid-cache'));
+          console.log(`${isDryRun ? 'DRY RUN: ' : ''}Looking for caches matching: ${cachePattern}`);
           
-          console.log(`Found ${gameGridCaches.length} game-grid caches to delete`);
+          // Get all caches with pagination
+          let allCaches = [];
+          let page = 1;
+          let hasMorePages = true;
           
-          for (const cache of gameGridCaches) {
-            console.log(`Deleting cache: ${cache.key}`);
-            await github.rest.actions.deleteActionsCacheById({
+          while (hasMorePages) {
+            const response = await github.rest.actions.getActionsCacheList({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              cache_id: cache.id,
+              per_page: 100,
+              page: page
             });
+            
+            allCaches = allCaches.concat(response.data.actions_caches);
+            hasMorePages = response.data.actions_caches.length === 100;
+            page++;
           }
           
-          console.log('All game-grid caches cleared!');
-
+          const matchingCaches = allCaches
+            .filter(cache => cache.key.includes(cachePattern))
+            .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // Delete oldest first
+          
+          console.log(`Found ${matchingCaches.length} matching caches`);
+          
+          if (matchingCaches.length === 0) {
+            console.log('No matching caches found.');
+            return;
+          }
+          
+          // Calculate total size
+          const totalSize = matchingCaches.reduce((sum, cache) => sum + cache.size_in_bytes, 0);
+          console.log(`Total size to ${isDryRun ? 'would be ' : ''}delete: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+          
+          // List all matching caches
+          console.log('\nMatching caches:');
+          matchingCaches.forEach((cache, index) => {
+            console.log(`${index + 1}. ${cache.key} (${(cache.size_in_bytes / 1024 / 1024).toFixed(2)} MB) - Created: ${cache.created_at}`);
+          });
+          
+          if (isDryRun) {
+            console.log('\nDRY RUN: No caches were deleted. Remove dry_run flag and confirm with "CLEAR" to actually delete.');
+            return;
+          }
+          
+          // Delete caches
+          let deletedCount = 0;
+          let errors = [];
+          
+          for (const cache of matchingCaches) {
+            try {
+              console.log(`Deleting cache: ${cache.key} (ID: ${cache.id})`);
+              await github.rest.actions.deleteActionsCacheById({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                cache_id: cache.id,
+              });
+              deletedCount++;
+            } catch (error) {
+              console.error(`Failed to delete cache ${cache.key}: ${error.message}`);
+              errors.push({ cache: cache.key, error: error.message });
+            }
+          }
+          
+          console.log(`\nSummary:`);
+          console.log(`- Successfully deleted: ${deletedCount} caches`);
+          console.log(`- Errors: ${errors.length}`);
+          console.log(`- Total space freed: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+          
+          if (errors.length > 0) {
+            console.log('\nErrors encountered:');
+            errors.forEach(err => console.log(`- ${err.cache}: ${err.error}`));
+          }
