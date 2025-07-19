@@ -4,6 +4,7 @@
   ...
 }: let
   packageJSON = builtins.fromJSON (builtins.readFile ./game-grid/package.json);
+  dataUrl = builtins.getEnv "DATA_URL";
 in {
   inherit (packageJSON) name version;
 
@@ -13,17 +14,20 @@ in {
   ];
 
   nodejs-package-lock-v3.packageLockFile = ./game-grid/package-lock.json;
-  nodejs-granular-v3.installMethod = "symlink";
-
+  nodejs-granular-v3 = {
+    installMethod = "symlink";
+    buildScript = ''
+      DATA_URL=${dataUrl} npm run build
+    '';
+  };
   mkDerivation = {
     src = lib.cleanSource ./game-grid;
-    checkPhase = ''
-      npm run test
-    '';
     doCheck = false; # TODO: Create offline tests
     passthru.meta = {
-      description = "Sample express node app using Dream2nix";
-      mainProgram = "game-grid";
+      description = "Simple web app using";
+      longDescription = ''
+        Web root available at "''\${game-grid}/lib/node_modules/game-grid/dist"
+      '';
     };
   };
 }

@@ -24,12 +24,6 @@
         self',
         ...
       }: {
-        apps = {
-          backend = {
-            type = "app";
-            program = lib.getExe self'.packages.default;
-          };
-        };
         packages = let
           evalModules = module:
             dream2nix.lib.evalModules {
