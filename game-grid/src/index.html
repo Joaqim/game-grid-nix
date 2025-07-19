@@ -66,12 +66,12 @@
 
 
         // TODO: Always render cardData, don't do fetchEntries here
-        async function renderCards(ids = [], page_nrs = []) {
+        async function renderCards(game_matches/*: Map<number, string[]> */ = new Map()) {
             const grid = document.querySelector(".grid");
 
-            // Fetch card data based on IDs or current page
-            if (ids.length > 0) {
-                cardData = await fetchEntriesByIds(ids, page_nrs)
+            // Fetch card data based optional provided matches
+            if (game_matches.size > 0) {
+                cardData = await fetchEntriesByMatches(game_matches);
             } else {
                 cardData = await fetchEntries(currentPage);
             }
@@ -288,15 +288,11 @@
         document.addEventListener("DOMContentLoaded", () => {
             init();
         });
-        async function fetchEntriesByIds(ids, page_nrs = new Set()) {
+        async function fetchEntriesByMatches(matches/*: Map<number, string[]> */) {
             let filteredEntries = [];
 
-            if (ids == null || ids.length === 0) {
-                return filteredEntries;
-            }
-
             // Fetch entries from hinted page nrs
-            for (const page of page_nrs) {
+            for (const page of matches.keys()) {
                 try {
                     const response = await fetch(`./data/page-${page}.json`);
                     if (!response.ok) {
@@ -306,8 +302,8 @@
                     if (entriesData == null || entriesData.entries == null) {
                         throw new Error(`Failed to fetch entries for page ${page}`);
                     }
-                    filteredEntries.push(...entriesData.entries.filter(entry => ids.includes(entry.id)))
-                    if (filteredEntries.length >= ids.length) {
+                    filteredEntries.push(...entriesData.entries.filter(entry => matches[page].includes(entry.id)))
+                    if (filteredEntries.length >= matches[page].length) {
                         break;
                     }
                 } catch (error) {
@@ -335,8 +331,9 @@
                     }, delay);
                 };
             }
-            let page_nrs = new Set();
-            let game_ids = searchIndex
+            let game_matches = new Map();
+            
+            searchIndex
                 .filter(entry => {
                 // Text search
                 const matchesQuery = !query || entry.searchableText.includes(query.toLowerCase());
@@ -362,18 +359,21 @@
                 })
                 // 12 best candidates
                 .slice(0, 12)
-                .map(entry => { 
-                    page_nrs.add(entry.page_nr);
-                    return entry.id
+                .map(entry => {
+                    if (game_matches.has(entry.page_nr)) {
+                        game_matches[entry.page_nr].push(entry.id);
+                    } else {
+                        game_matches.set(entry.page_nr, [entry.id]);
+                    }
                 });
             
-            if (game_ids.length === 0) {
+            if (game_matches.size === 0) {
                 document.querySelector('.grid').innerHTML = '<p>No results found.</p>';
                 return;
             }
             //cardData = fetchEntriesByIds(result);;
             debounce(async () => {
-                await renderCards(game_ids, page_nrs);
+                await renderCards(game_matches);
             }, 300)();
             //renderCards(result);
         }
