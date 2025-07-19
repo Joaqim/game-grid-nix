@@ -5,8 +5,10 @@
   "description": "",
   "scripts": {
     "build": "npm run clean && tsx ./esbuild.ts",
-    "dev": "npm run build && npx http-server dist -p 8080",
+    "build:dev": "DATA_URL= tsx ./esbuild.ts",
+    "dev": "npm run build:dev && npx http-server dist -p 8080",
     "watch": "tsx --watch ./esbuild.ts",
+    "watch:dev": "DATA_URL= tsx --watch ./esbuild.ts",
     "clean": "rimraf dist",
     "test": "npm run validate:build",
     "test:build": "npm run build && npm run validate:build",
