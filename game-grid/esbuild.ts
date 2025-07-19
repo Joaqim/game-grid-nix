@@ -51,6 +51,18 @@ async function runBuild() {
     // ignore
   });
 
+  await esbuild
+    .build({
+      entryPoints: ["src/app.ts"],
+      bundle: true,
+      minify: true,
+      format: "esm",
+      target: ["esnext"],
+      write: true,
+      outdir: "./dist",
+    })
+    .catch(() => process.exit(1));
+
   await runBuild();
 
   esbuild
