@@ -203,8 +203,20 @@ body {
     body {
         padding: 1rem;
     }
+
+    .nav-arrow {
+        position: absolute;
+        z-index: 1;
+    }
+    .nav-arrow.prev {
+        left: 1rem;
+    }
+    .nav-arrow.next {
+        right: 1rem;
+    }
     
     .theme-toggle {
+        position: absolute; /* Don't move along scroll on mobile devices */
         top: 1rem;
         right: 1rem;
     }
@@ -347,7 +359,7 @@ body {
 }
 
 .modal-title {
-    font-size: 2.5rem;
+    font-size: x-large;
     font-weight: 800;
     margin-bottom: 1rem;
     color: var(--text-primary);
@@ -440,13 +452,8 @@ body {
 
 @media (max-width: 768px) {
     .modal-content {
-        width: 95vw;
-        max-width: 95vw;
+        width: 80vw;
         margin: 1rem;
-    }
-    
-    .modal-title {
-        font-size: 2rem;
     }
 }
 
