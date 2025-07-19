@@ -7,6 +7,7 @@ export interface Card {
   info_hash: string;
   screenshots_base64: string[];
   content?: string;
+  sys_requirements?: string;
 }
 
 export interface Metadata {

@@ -1,3 +1,4 @@
+import { default as humanFormat } from "human-format";
 /**
  * Utility functions for DOM manipulation
  */
@@ -27,22 +28,26 @@ export class DOMUtils {
             card.hero_img_base64
           }" aria-hidden="true" class="overlay-image">
           <h3 class="card-title">${card.title}</h3>
+          <div class="card-meta">
+            ${card.genres
+              .map((tag: string) => `<span class="card-tag">${tag}</span>`)
+              .join("")}
+              ${
+                card.total_size
+                  ? `<span class= "card-size">${humanFormat(
+                      card.total_size
+                    )}</span>`
+                  : ""
+              }
+          </div>
           <p class="card-description">${
             card.description
               ? trimStartMatches(card.description, `${card.title}:`).trim()
               : ""
           }</p>
-          <div class="card-meta">
-            ${card.genres
-              .map((tag: string) => `<span class="card-tag">${tag}</span>`)
-              .join("")}
-          </div>
+
           <div class="card-expanded">
-            ${
-              card.description && card.content
-                ? `<p>${card.content.split("</p>")[0]}</p>`
-                : card.content || ""
-            }
+            ${card.content}
           </div>
         </div>
       `;

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { parse as parseFileSize } from "human-format";
 import { createHash } from "node:crypto";
 import { BuildCache, GameEntry, ProcessedGameEntry } from "../types.interface";
 
@@ -119,13 +120,58 @@ export class ImageCache {
     entry: GameEntry
   ): Promise<ProcessedGameEntry | null> {
     // Check if entry is already processed and cached
-    if (this.cache.processedEntries[entry.torrent_id]) {
+    const existingEntry = this.cache.processedEntries[entry.torrent_id];
+    if (existingEntry) {
       //console.log(`Using cached entry: ${entry.torrent_id}`);
-      return this.cache.processedEntries[entry.torrent_id];
+
+      // Compare existing entry to new entry
+      const keys = [
+        "title",
+        "description",
+        "genres",
+        "hero_img_base64",
+        "info_hash",
+        "languages",
+        "screenshots_base64",
+        "support_link",
+        "sys_requirements",
+        "title_text",
+        "total_size",
+        "version",
+      ];
+      const hasChanges = keys.some((key) => {
+        if (key === "screenshots_base64") {
+          return (
+            existingEntry[key].length !== entry.screenshots.length ||
+            !existingEntry[key].every((screenshot, index) => {
+              return screenshot === entry.screenshots[index];
+            })
+          );
+        }
+        return existingEntry[key] !== entry[key];
+      });
+
+      // If there are changes, update the existing entry
+      if (hasChanges) {
+        //console.log(`Updating entry: ${entry.torrent_id}`);
+        const processedEntry = await this.processEntryHelper(entry);
+        if (processedEntry) {
+          this.cache.processedEntries[entry.torrent_id] = processedEntry;
+        }
+        return processedEntry;
+      }
+
+      return existingEntry;
     }
 
     //console.log(`Processing entry: ${entry.torrent_id}`);
 
+    return this.processEntryHelper(entry);
+  }
+
+  private async processEntryHelper(
+    entry: GameEntry
+  ): Promise<ProcessedGameEntry | null> {
     // Process hero image
     const heroBase64 = await this.getImageBase64(entry.hero_img);
     if (!heroBase64) {
@@ -151,20 +197,32 @@ export class ImageCache {
         );
       }
     }
+    let total_size: number | undefined;
+    if (entry.total_size && /^\d+/.test(entry.total_size)) {
+      try {
+        total_size = parseFileSize(entry.total_size);
+      } catch {
+        // ignore
+      }
+    }
 
     const processedEntry: ProcessedGameEntry = {
       id: entry.torrent_id,
-      hero_img_base64: heroBase64,
-      screenshots_base64: screenshotsBase64,
       title: entry.name,
-      description: entry.description === "null" ? null : entry.description,
+      description:
+        (entry.description !== "null" ? entry.description : undefined) ||
+        undefined,
       genres: entry.genres,
+      hero_img_base64: heroBase64,
       info_hash: entry.info_hash,
+      languages: entry.languages,
+      screenshots_base64: screenshotsBase64,
+      support_link: entry.support_link,
+      sys_requirements: entry.sys_requirements,
+      title_text: entry.title_text,
+      total_size,
+      version: entry.version,
     };
-
-    // Cache the processed entry
-    this.cache.processedEntries[entry.torrent_id] = processedEntry;
-    this.saveCache();
 
     return processedEntry;
   }

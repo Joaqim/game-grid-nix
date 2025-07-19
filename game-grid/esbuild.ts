@@ -1,6 +1,7 @@
 #!/usr/bin/env -S tsx
 /* eslint-disable import/no-extraneous-dependencies */
 import esbuild from "esbuild";
+import { copy } from "esbuild-plugin-copy";
 import { writeFile, mkdir, readFile } from "node:fs/promises";
 import process from "node:process";
 import { minify, Options } from "html-minifier-terser";
@@ -60,6 +61,15 @@ async function runBuild() {
       target: ["esnext"],
       write: true,
       outdir: "./dist",
+      plugins: [
+        copy({
+          resolveFrom: "cwd",
+          assets: {
+            from: ["./public/*"],
+            to: "./dist",
+          },
+        }),
+      ],
     })
     .catch(() => process.exit(1));
 

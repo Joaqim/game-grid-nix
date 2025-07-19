@@ -75,10 +75,6 @@ export class StaticSiteGenerator {
         `page-${pageNumber}.json`
       );
       fs.writeFileSync(pageFilePath, JSON.stringify(pageData, null, 2));
-
-      console.log(
-        `Generated page ${pageNumber} with ${pageData.entries.length} entries`
-      );
     }
 
     // Step 4: Generate search index

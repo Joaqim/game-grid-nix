@@ -1,21 +1,35 @@
 export interface GameEntry {
   torrent_id: string;
   name: string;
-  hero_img: string;
-  screenshots: string[];
-  description: string | "null";
+  description?: string | "null";
   genres: string[];
+  hero_img: string;
   info_hash: string;
+  languages?: string;
+  screenshots: string[];
+  support_link: string;
+  sys_requirements?: string;
+  title_text: string;
+  total_size?: string;
+  version?: string;
+  seeders: number;
+  leechers: number;
 }
 
 export interface ProcessedGameEntry {
   id: string;
   title: string;
-  hero_img_base64: string;
-  screenshots_base64: string[];
-  description: string | null;
+  description?: string;
   genres: string[];
+  hero_img_base64: string;
   info_hash: string;
+  languages?: string;
+  screenshots_base64: string[];
+  support_link: string;
+  sys_requirements?: string;
+  title_text: string;
+  total_size?: number;
+  version?: string;
 }
 
 export interface PageData {

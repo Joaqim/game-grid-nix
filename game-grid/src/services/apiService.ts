@@ -42,6 +42,7 @@ export class ApiService {
           hero_img_base64,
           info_hash,
           screenshots_base64,
+          sys_requirements,
         }) => ({
           id,
           title,
@@ -50,7 +51,13 @@ export class ApiService {
           hero_img_base64,
           info_hash,
           screenshots_base64,
-          content:
+          content: `
+            ${
+              sys_requirements
+                ? `<p><b>System Requirements:</b> ${sys_requirements}</p>`
+                : ""
+            }
+          ${
             screenshots_base64.length > 0
               ? `
             <p><b>Screenshots:</b></p>
@@ -59,9 +66,9 @@ export class ApiService {
                 (base64) =>
                   `<img src="data:image/png;base64,${base64}" alt="${title}">`
               )
-              .join("")}
-          `
-              : "",
+              .join("")}`
+              : ""
+          }`,
         })
       );
     } catch (error) {
