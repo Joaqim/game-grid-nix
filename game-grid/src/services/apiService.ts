@@ -4,6 +4,7 @@ import {
   EntriesResponse,
   SearchIndexEntry,
 } from "../types/interfaces";
+import { fetchAsType } from "../utils/fetchUtils";
 
 /**
  * Service class for handling API requests
@@ -14,11 +15,7 @@ export class ApiService {
    */
   static async fetchMetadata(): Promise<Metadata | null> {
     try {
-      const response = await fetch("./data/metadata.json");
-      if (!response.ok) {
-        throw new Error("Failed to fetch metadata");
-      }
-      const metadata = (await response.json()) as Metadata;
+      const metadata = fetchAsType<Metadata>("./data/metadata.json");
       console.log("Metadata:", metadata);
       return metadata;
     } catch (error) {
@@ -32,11 +29,9 @@ export class ApiService {
    */
   static async fetchEntries(page: number): Promise<Card[]> {
     try {
-      const response = await fetch(`./data/page-${page}.json`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch entries for page ${page}`);
-      }
-      const entriesData = (await response.json()) as EntriesResponse;
+      const entriesData = await fetchAsType<EntriesResponse>(
+        `./data/page-${page}.json`
+      );
 
       return entriesData.entries.map(
         ({
@@ -86,11 +81,9 @@ export class ApiService {
     // Fetch entries from hinted page numbers
     for (const [page, ids] of matches.entries()) {
       try {
-        const response = await fetch(`./data/page-${page}.json`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch entries for page ${page}`);
-        }
-        const entriesData = (await response.json()) as EntriesResponse;
+        const entriesData = await fetchAsType<EntriesResponse>(
+          `./data/page-${page}.json`
+        );
         if (!entriesData || !entriesData.entries) {
           throw new Error(`Failed to fetch entries for page ${page}`);
         }
@@ -117,12 +110,10 @@ export class ApiService {
    */
   static async fetchSearchIndex(): Promise<SearchIndexEntry[]> {
     try {
-      const response = await fetch("./data/search-index.json");
-      if (!response.ok) {
-        throw new Error("Failed to fetch search index");
-      }
-      const searchIndex = (await response.json()) as SearchIndexEntry[];
-      console.log("Search index length:", searchIndex.length);
+      const searchIndex = await fetchAsType<SearchIndexEntry[]>(
+        "./data/search-index.json"
+      );
+      console.log("Search index entries:", searchIndex.length);
       return searchIndex;
     } catch (error) {
       console.error("Error fetching search index:", error);
