@@ -42,9 +42,6 @@ export class StaticSiteGenerator {
 
     for (let i = 0; i < gameEntries.length; i++) {
       const entry = gameEntries[i];
-      console.log(
-        `Processing ${i + 1}/${gameEntries.length}: ${entry.torrent_id}`
-      );
       try {
         const processed = await this.imageCache.processEntry(entry);
         if (processed) {

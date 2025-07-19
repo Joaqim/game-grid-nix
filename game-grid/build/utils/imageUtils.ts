@@ -120,11 +120,11 @@ export class ImageCache {
   ): Promise<ProcessedGameEntry | null> {
     // Check if entry is already processed and cached
     if (this.cache.processedEntries[entry.torrent_id]) {
-      console.log(`Using cached entry: ${entry.torrent_id}`);
+      //console.log(`Using cached entry: ${entry.torrent_id}`);
       return this.cache.processedEntries[entry.torrent_id];
     }
 
-    console.log(`Processing entry: ${entry.torrent_id}`);
+    //console.log(`Processing entry: ${entry.torrent_id}`);
 
     // Process hero image
     const heroBase64 = await this.getImageBase64(entry.hero_img);
