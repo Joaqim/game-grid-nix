@@ -205,7 +205,7 @@ body {
     }
 
     .nav-arrow {
-        position: absolute;
+        position: relative;
         z-index: 1;
     }
     .nav-arrow.prev {
@@ -222,7 +222,7 @@ body {
     }
 }
 
-/* Modal Styles */
+/* Modal Styles - Improved for Mobile */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -238,6 +238,7 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    padding: 1rem; /* Add padding for mobile */
 }
 
 .modal-overlay.active {
@@ -254,10 +255,9 @@ body {
     overflow-y: auto;
     transform: scale(0.9) translateY(20px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
     width: 40vw;
-    /* min-height: 297mm; */
     max-width: 90vw;
+    min-width: 50vw;
 }
 
 .modal-overlay.active .modal-content {
@@ -294,20 +294,9 @@ body {
     font-size: 1.2rem;
     transition: all 0.3s ease;
     z-index: 10;
-}
-
-[data-theme="dark"] .modal-close {
-    background: rgba(45, 55, 72, 0.9);
-    color: var(--text-primary);
-}
-
-[data-theme="dark"] .modal-close:hover {
-    background: var(--card-bg);
-}
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 1);
-    transform: scale(1.1);
+    /* Improve touch target size for mobile */
+    min-height: 44px;
+    min-width: 44px;
 }
 
 .modal-link {
@@ -327,17 +316,24 @@ body {
     font-size: 1.2rem;
     transition: all 0.3s ease;
     z-index: 10;
+    /* Improve touch target size for mobile */
+    min-height: 44px;
+    min-width: 44px;
 }
 
-.modal-link:hover {
+.modal-link:hover,
+.modal-close:hover {
     background: rgba(255, 255, 255, 1);
     transform: scale(1.1);
 }
+
+[data-theme="dark"] .modal-close,
 [data-theme="dark"] .modal-link {
     background: rgba(45, 55, 72, 0.9);
     color: var(--text-primary);
 }
 
+[data-theme="dark"] .modal-close:hover,
 [data-theme="dark"] .modal-link:hover {
     background: var(--card-bg);
 }
@@ -346,16 +342,15 @@ body {
     padding: 2rem;
 }
 
-
 .modal-overlay-image {
     position: absolute;
     left: 0;
     z-index: -1;
-    width: 100%; /* Ensures the overlay image covers the card width */
-    height: 100%; /* Since we are blurring, let's ignore aspect ratio */
-    opacity: 0.3; /* Adjust opacity for subtle color influence */
-    filter: blur(60px); /* Blur on the overlay image */
-    pointer-events: none; /* Allows clicks to pass through */
+    width: 100%;
+    height: 100%;
+    opacity: 0.3;
+    filter: blur(60px);
+    pointer-events: none;
 }
 
 .modal-title {
@@ -392,6 +387,7 @@ body {
     display: flex;
     gap: 1rem;
     margin-bottom: 2rem;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .modal-tag {
@@ -402,6 +398,7 @@ body {
     font-weight: 600;
 }
 
+/* Navigation arrows */
 .navigation-arrows {
     position: absolute;
     top: 50%;
@@ -424,21 +421,35 @@ body {
     font-size: 1.5rem;
     transition: all 0.3s ease;
     margin: 0.5vw;
+    position: initial;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1001;
+    /* Improve touch target size for mobile */
+    min-height: 44px;
+    min-width: 44px;
+
+}
+
+.nav-arrow.prev {
+    left: 1rem;
+}
+
+.nav-arrow.next {
+    right: 1rem;
 }
 
 .nav-arrow:hover {
     background: rgba(255, 255, 255, 1);
-    transform: scale(1.1);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .nav-arrow.disabled {
     opacity: 0.6;
-/*     cursor: not-allowed;
-    pointer-events: none; */
 }
 
 .nav-arrow.disabled:hover {
-    transform: none;
+    transform: translateY(-50%);
 }
 
 [data-theme="dark"] .nav-arrow {
@@ -450,13 +461,163 @@ body {
     background: var(--card-bg);
 }
 
+
+/* Mobile-specific Modal Styles */
 @media (max-width: 768px) {
+    .modal-overlay {
+        padding: 0.5rem;
+        align-items: flex-start; /* Align to top on mobile for better scrolling */
+        padding-top: 2rem;
+    }
+    
     .modal-content {
-        width: 80vw;
-        margin: 1rem;
+        width: 95vw;
+        max-width: none;
+        min-width: unset;
+        margin: 0;
+        max-height: 85vh; /* Reduce height on mobile */
+        border-radius: 12px; /* Slightly smaller radius */
+        min-width: fit-content;
+    }
+    
+    .modal-header {
+        height: 200px; /* Reduce header height on mobile */
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .modal-body {
+        padding: 1.5rem; /* Reduce padding on mobile */
+    }
+    
+    .modal-close,
+    .modal-link {
+        width: 36px;
+        height: 36px;
+        min-width: 44px; /* Keep minimum touch target */
+        min-height: 44px;
+        font-size: 1rem;
+        top: 0.75rem;
+    }
+    
+    .modal-close {
+        right: 0.75rem;
+    }
+    
+    .modal-link {
+        right: 3.5rem; /* Adjust spacing for smaller buttons */
+    }
+    
+    .modal-title {
+        font-size: 1.5rem; /* Smaller title on mobile */
+    }
+    
+    .modal-content-text {
+        font-size: 1rem; /* Smaller content text */
+    }
+    
+    .modal-meta {
+        gap: 0.5rem; /* Reduce gap on mobile */
+    }
+    
+    .modal-tag {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Navigation arrows on mobile */
+    .nav-arrow {
+        width: 44px;
+        height: 44px;
+        font-size: icon;
+        margin: 0;
+        position: relative;
+    }
+    
+    .nav-arrow.prev {
+        left: 2.5rem;
+    }
+    
+    .nav-arrow.next {
+        right: 2.5rem;
+    }
+    
+    /* Make modal scrollable content more touch-friendly */
+    .modal-content {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Improve text readability on small screens */
+    .modal-description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* Ensure images don't overflow on mobile */
+    .modal-content-text img {
+        height: auto;
+        border-radius: 8px;
+        margin: 1rem 0;
     }
 }
 
+/* Very small screens (phones in portrait) */
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: 0.25rem;
+        padding-top: 1rem;
+    }
+    
+    .modal-content {
+        width: 98vw;
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+    
+    .modal-header {
+        height: 180px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-close,
+    .modal-link {
+        width: 32px;
+        height: 32px;
+        top: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .modal-close {
+        right: 0.5rem;
+    }
+    
+    .modal-link {
+        right: 3rem;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .nav-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: icon;
+        position: relative;
+    }
+    
+    .nav-arrow.prev {
+        left: 3.25rem;
+    }
+    
+    .nav-arrow.next {
+        right: 3.25rem;
+    }
+}
 
 .pagination {
     text-align: center;
