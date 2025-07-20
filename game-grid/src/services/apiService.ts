@@ -43,6 +43,7 @@ export class ApiService {
           info_hash,
           screenshots_base64,
           sys_requirements,
+          title_text,
         }) => ({
           id,
           title,
@@ -51,6 +52,7 @@ export class ApiService {
           hero_img_base64,
           info_hash,
           screenshots_base64,
+          title_text,
           content: `
             ${
               sys_requirements

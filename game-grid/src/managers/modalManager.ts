@@ -41,7 +41,7 @@ export class ModalManager {
       modalOverlayImage.src = `data:image/png;base64,${card.hero_img_base64}`;
     if (modalTitle) modalTitle.textContent = card.title;
     if (modalLink)
-      modalLink.href = `magnet:?xt=urn:btih:${card.info_hash}&dn=${card.title}`;
+      modalLink.href = `magnet:?xt=urn:btih:${card.info_hash}&dn=${card.title_text}`;
     if (modalDescription) modalDescription.textContent = card.description;
     if (modalContent) modalContent.innerHTML = card.content || "";
 

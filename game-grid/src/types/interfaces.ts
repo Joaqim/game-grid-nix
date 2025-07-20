@@ -1,6 +1,7 @@
 export interface Card {
   id: string;
   title: string;
+  title_text: string;
   description: string;
   genres: string[];
   hero_img_base64: string;

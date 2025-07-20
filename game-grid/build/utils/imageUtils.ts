@@ -125,8 +125,7 @@ export class ImageCache {
       //console.log(`Using cached entry: ${entry.torrent_id}`);
 
       // Compare existing entry to new entry
-      const keys = [
-        "title",
+      const keys: (keyof ProcessedGameEntry)[] = [
         "description",
         "genres",
         "hero_img_base64",
@@ -136,9 +135,10 @@ export class ImageCache {
         "support_link",
         "sys_requirements",
         "title_text",
+        "title",
         "total_size",
         "version",
-      ];
+      ] as const;
       const hasChanges = keys.some((key) => {
         if (key === "screenshots_base64") {
           return (
