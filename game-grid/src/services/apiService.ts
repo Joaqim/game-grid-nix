@@ -70,7 +70,7 @@ export class ApiService {
               )
               .join("")}`
               : ""
-          }`,
+          }${'<a href="https://gitlab.com/jc141x/portal/" target="_blank" rel="noopener noreferrer">jc141 Support Link</a>'}`,
         })
       );
     } catch (error) {
