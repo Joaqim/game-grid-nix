@@ -5,9 +5,9 @@ permissions:
   pages: write
 
 on:
-  # Run every 8 hours
   schedule:
     - cron: '0 */8 * * *'
+    - cron: '0 0 * * 0'
   
   # Allow manual trigger
   workflow_dispatch:
