@@ -651,3 +651,39 @@ body {
     font-size: x-large;
     color: var(--text-primary)
 }
+
+/* "View on Github" button */
+.github-view-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.github-button {
+    display: inline-flex;
+    align-items: center;
+    top: 2rem;
+    right: 2rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    text-decoration: none;
+}
+
+.github-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.github-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
