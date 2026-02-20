@@ -55,7 +55,7 @@ export class StaticSiteGenerator {
     }
 
     console.log(
-      `✅ Successfully processed ${processedEntries.length}/${gameEntries.length} entries`
+      `✅ Successfully processed ${processedEntries.length}/${gameEntries.length} entries`,
     );
 
     // Step 3: Generate paginated data files
@@ -66,13 +66,13 @@ export class StaticSiteGenerator {
       const pageNumber = i + 1;
       const pageData = this.paginator.createPageData(
         processedEntries,
-        pageNumber
+        pageNumber,
       );
 
       const pageFilePath = path.join(
         this.distDir,
         "data",
-        `page-${pageNumber}.json`
+        `page-${pageNumber}.json`,
       );
       fs.writeFileSync(pageFilePath, JSON.stringify(pageData, null, 2));
     }
@@ -85,7 +85,7 @@ export class StaticSiteGenerator {
     // Save search index
     fs.writeFileSync(
       path.join(this.distDir, "data", "search-index.json"),
-      JSON.stringify(searchIndex, null, 2)
+      JSON.stringify(searchIndex, null, 2),
     );
 
     // Step 5: Generate metadata file
@@ -99,7 +99,7 @@ export class StaticSiteGenerator {
 
     fs.writeFileSync(
       path.join(this.distDir, "data", "metadata.json"),
-      JSON.stringify(metadata, null, 2)
+      JSON.stringify(metadata, null, 2),
     );
 
     // Step 6: Update cache
@@ -107,10 +107,10 @@ export class StaticSiteGenerator {
 
     console.log("✅ Static site generation complete!");
     console.log(
-      `📊 Generated ${pages.length} pages with ${processedEntries.length} entries`
+      `📊 Generated ${pages.length} pages with ${processedEntries.length} entries`,
     );
     console.log(
-      `💾 Cache stats: ${metadata.cacheStats.totalImages} images, ${metadata.cacheStats.cacheSize}`
+      `💾 Cache stats: ${metadata.cacheStats.totalImages} images, ${metadata.cacheStats.cacheSize}`,
     );
   }
 }

@@ -10,7 +10,7 @@ export class DOMUtils {
     card: any,
     index: number,
     onCardClick: (index: number) => void,
-    trimStartMatches: (str: string, match: string) => string
+    trimStartMatches: (str: string, match: string) => string,
   ): HTMLDivElement {
     const cardElement = document.createElement("div");
     cardElement.className = "card";
@@ -20,8 +20,8 @@ export class DOMUtils {
     cardElement.innerHTML = `
         <div class="card-image">
           <img src="data:image/png;base64,${card.hero_img_base64}" alt="${
-      card.title
-    }">
+            card.title
+          }">
         </div>
         <div class="card-content">
           <img src="data:image/png;base64,${
@@ -35,7 +35,7 @@ export class DOMUtils {
               ${
                 card.total_size
                   ? `<span class= "card-size">${humanFormat(
-                      card.total_size
+                      card.total_size,
                     )}</span>`
                   : ""
               }
@@ -61,7 +61,7 @@ export class DOMUtils {
   static createPaginationButton(
     text: string,
     onClick: () => void,
-    isDisabled: boolean = false
+    isDisabled: boolean = false,
   ): HTMLButtonElement {
     const button = document.createElement("button");
     button.innerText = text;
@@ -111,7 +111,7 @@ export class DOMUtils {
    * Gets all elements by selector with type safety
    */
   static querySelectorAll<T extends HTMLElement>(
-    selector: string
+    selector: string,
   ): NodeListOf<T> {
     return document.querySelectorAll(selector) as NodeListOf<T>;
   }

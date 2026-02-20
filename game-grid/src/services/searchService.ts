@@ -9,7 +9,7 @@ export class SearchService {
    */
   static debounce<T extends (...args: any[]) => void, U>(
     func: T,
-    delay: number
+    delay: number,
   ): (...args: Parameters<T>) => void {
     let timeoutId: NodeJS.Timeout;
     return function (this: U, ...args: Parameters<T>) {
@@ -28,7 +28,7 @@ export class SearchService {
   static performSearch(
     query: string,
     searchIndex: SearchIndexEntry[],
-    filters?: SearchFilters
+    filters?: SearchFilters,
   ): Map<number, string[]> {
     const gameMatches = new Map<number, string[]>();
 

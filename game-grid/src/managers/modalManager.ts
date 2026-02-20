@@ -25,7 +25,7 @@ export class ModalManager {
     // Populate modal content
     const modalImage = DOMUtils.getElementById<HTMLImageElement>("modal-image");
     const modalOverlayImage = DOMUtils.getElementById<HTMLImageElement>(
-      "modal-overlay-image"
+      "modal-overlay-image",
     );
     const modalTitle =
       DOMUtils.getElementById<HTMLHeadingElement>("modal-title");
@@ -116,7 +116,7 @@ export class ModalManager {
         "disabled",
         this.state.currentCardIndex -
           this.state.cardsPerPage * (this.state.currentPage - 1) ===
-          0
+          0,
       );
     }
 
@@ -126,7 +126,7 @@ export class ModalManager {
         this.state.currentCardIndex === this.state.cardData.length - 1 ||
           this.state.currentCardIndex -
             this.state.cardsPerPage * (this.state.currentPage - 1) ===
-            this.state.cardsPerPage - 1
+            this.state.cardsPerPage - 1,
       );
     }
   }

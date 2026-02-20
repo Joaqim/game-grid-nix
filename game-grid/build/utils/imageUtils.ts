@@ -117,7 +117,7 @@ export class ImageCache {
   }
 
   public async processEntry(
-    entry: GameEntry
+    entry: GameEntry,
   ): Promise<ProcessedGameEntry | null> {
     // Check if entry is already processed and cached
     const existingEntry = this.cache.processedEntries[entry.torrent_id];
@@ -170,13 +170,13 @@ export class ImageCache {
   }
 
   private async processEntryHelper(
-    entry: GameEntry
+    entry: GameEntry,
   ): Promise<ProcessedGameEntry | null> {
     // Process hero image
     const heroBase64 = await this.getImageBase64(entry.hero_img);
     if (!heroBase64) {
       console.error(
-        `Failed to process hero image for entry ${entry.torrent_id}`
+        `Failed to process hero image for entry ${entry.torrent_id}`,
       );
       return null;
     }
@@ -193,7 +193,7 @@ export class ImageCache {
         screenshotsBase64.push(screenshotBase64);
       } else {
         console.warn(
-          `Failed to process screenshot ${screenshot} for entry ${entry.torrent_id}`
+          `Failed to process screenshot ${screenshot} for entry ${entry.torrent_id}`,
         );
       }
     }

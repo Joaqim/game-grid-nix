@@ -30,7 +30,7 @@ export class ApiService {
   static async fetchEntries(page: number): Promise<Card[]> {
     try {
       const entriesData = await fetchAsType<EntriesResponse>(
-        `./data/page-${page}.json`
+        `./data/page-${page}.json`,
       );
 
       return entriesData.entries.map(
@@ -66,12 +66,12 @@ export class ApiService {
             ${screenshots_base64
               .map(
                 (base64) =>
-                  `<img src="data:image/png;base64,${base64}" alt="${title}">`
+                  `<img src="data:image/png;base64,${base64}" alt="${title}">`,
               )
               .join("")}`
               : ""
           }${'<a href="https://gitlab.com/jc141x/portal/" target="_blank" rel="noopener noreferrer">jc141 Support Link</a>'}`,
-        })
+        }),
       );
     } catch (error) {
       console.error("Error fetching entries:", error);
@@ -83,7 +83,7 @@ export class ApiService {
    * Fetches entries by matching page numbers and IDs
    */
   static async fetchEntriesByMatches(
-    matches: Map<number, string[]>
+    matches: Map<number, string[]>,
   ): Promise<Card[]> {
     const filteredEntries: Card[] = [];
 
@@ -91,14 +91,14 @@ export class ApiService {
     for (const [page, ids] of matches.entries()) {
       try {
         const entriesData = await fetchAsType<EntriesResponse>(
-          `./data/page-${page}.json`
+          `./data/page-${page}.json`,
         );
         if (!entriesData || !entriesData.entries) {
           throw new Error(`Failed to fetch entries for page ${page}`);
         }
 
         const matchedEntries = entriesData.entries.filter((entry) =>
-          ids.includes(entry.id)
+          ids.includes(entry.id),
         );
 
         filteredEntries.push(...matchedEntries);
@@ -120,7 +120,7 @@ export class ApiService {
   static async fetchSearchIndex(): Promise<SearchIndexEntry[]> {
     try {
       const searchIndex = await fetchAsType<SearchIndexEntry[]>(
-        "./data/search-index.json"
+        "./data/search-index.json",
       );
       console.log("Search index entries:", searchIndex.length);
       return searchIndex;

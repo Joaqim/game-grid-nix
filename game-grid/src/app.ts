@@ -1,4 +1,4 @@
-import { Card, AppState, SearchFilters } from "./types/interfaces";
+import { AppState, SearchFilters } from "./types/interfaces";
 import { ApiService } from "./services/apiService";
 import { SearchService } from "./services/searchService";
 import { DOMUtils } from "./utils/domUtils";
@@ -28,7 +28,7 @@ export class App {
     this.modalManager = new ModalManager(this.state);
     this.debouncedSearch = SearchService.debounce(
       this.executeSearch.bind(this),
-      300
+      300,
     );
     this.setupEventListeners();
   }
@@ -66,7 +66,7 @@ export class App {
       this.state.cardData = await ApiService.fetchEntriesByMatches(gameMatches);
     } else {
       this.state.cardData = await ApiService.fetchEntries(
-        this.state.currentPage
+        this.state.currentPage,
       );
     }
 
@@ -77,7 +77,7 @@ export class App {
     this.state.cardData.forEach((card, index) => {
       // Check if the card already exists in the grid
       let cardElement = grid.querySelector<HTMLDivElement>(
-        `.card[data-id="${card.id}"]`
+        `.card[data-id="${card.id}"]`,
       );
 
       if (!cardElement) {
@@ -86,7 +86,7 @@ export class App {
           card,
           index,
           (idx) => this.modalManager.openModal(idx),
-          SearchService.trimStartMatches
+          SearchService.trimStartMatches,
         );
       }
 
@@ -117,7 +117,7 @@ export class App {
     let startPage = Math.max(1, this.state.currentPage - halfVisible);
     let endPage = Math.min(
       this.state.totalPages,
-      this.state.currentPage + halfVisible
+      this.state.currentPage + halfVisible,
     );
 
     if (this.state.currentPage <= halfVisible) {
@@ -147,7 +147,7 @@ export class App {
           this.state.currentPage = i;
           this.renderCards();
         },
-        i === this.state.currentPage
+        i === this.state.currentPage,
       );
       paginationContainer.appendChild(btn);
     }
@@ -163,7 +163,7 @@ export class App {
         () => {
           this.state.currentPage = this.state.totalPages;
           this.renderCards();
-        }
+        },
       );
       paginationContainer.appendChild(lastBtn);
     }
@@ -177,7 +177,7 @@ export class App {
     if (!header) return;
 
     const searchInput = DOMUtils.createSearchInput((value) =>
-      this.performSearch(value)
+      this.performSearch(value),
     );
     header.appendChild(searchInput);
   }
@@ -199,12 +199,12 @@ export class App {
    */
   private async executeSearch(
     query: string,
-    filters?: SearchFilters
+    filters?: SearchFilters,
   ): Promise<void> {
     const gameMatches = SearchService.performSearch(
       query,
       this.state.searchIndex,
-      filters
+      filters,
     );
 
     if (gameMatches.size === 0) {

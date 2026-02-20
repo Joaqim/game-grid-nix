@@ -18,7 +18,7 @@ export class IndexedDataGenerator {
           page_nr: pageIndex + 1,
           searchableText: this.createSearchableText(entry),
           filters: this.extractFilters(entry),
-        }))
+        })),
       )
       .flat();
   }
