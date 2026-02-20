@@ -139,6 +139,24 @@ export class ImageCache {
         "total_size",
         "version",
       ] as const;
+
+      function isValidKey(key: string): key is keyof GameEntry {
+        return [
+          "id",
+          "title",
+          "description",
+          "genres",
+          "hero_img_base64",
+          "info_hash",
+          "languages",
+          "support_link",
+          "sys_requirements",
+          "title_text",
+          "total_size",
+          "version",
+        ].includes(key);
+      }
+
       const hasChanges = keys.some((key) => {
         if (key === "screenshots_base64") {
           return (
@@ -148,7 +166,7 @@ export class ImageCache {
             })
           );
         }
-        return existingEntry[key] !== entry[key];
+        return isValidKey(key) && existingEntry[key] !== entry[key];
       });
 
       // If there are changes, update the existing entry
